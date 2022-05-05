@@ -12,6 +12,7 @@ uniapp支持点击滚动到对应的tab的选项卡组件，也支持滚动到�
 参数|说明|类型|默认值|必传
 :-:|:--:|:-:|:-:|---
 scrollTop|**由于组件内部无法获取滚动条位置，需要在父级组件调用`onPageScroll`获取**|Number|0|是
+current|选中的tab下标|Number|0|否
 tabs|选项卡列表，**详情见下面说明**|Array|[ ]|是
 tabOptions|选项卡组件的配置 **详情见下面说明**|String|0rpx|否
 sticky|是否设置选项卡为固定定位|Boolean|true|否
