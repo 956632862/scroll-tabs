@@ -14,6 +14,7 @@
           :barWidth="tabOptions.barWidth"
           :flexBetween="tabOptions.flexBetween"
           :itemStyle="tabOptions.itemStyle"
+          :customClass="tabOptions.customClass"
           @change='handleChangeTab'
       />
     </view>
