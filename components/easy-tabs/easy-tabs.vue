@@ -1,6 +1,6 @@
 <template>
-<view class="easy-tabs-container">
-  <view id="easy-tabs-scroll-container">
+<view class="easy-tabs-container" :class="customClass ? customClass : ''">
+  <view id="easy-tabs-scroll-container" >
     <scroll-view scroll-x class="easy-tabs-scroll" :scrollLeft="scrollLeft" scroll-with-animation>
       <view class="easy-tabs-box" :class="{'easy-tabs-box-flex-space-between': flexBetween}">
         <!--列表-->
@@ -35,6 +35,7 @@
  * @param [string | number] barWidth  tabBar的宽 设置为auto的时候，会根据tab的宽度自动变化
  * @param [boolean] flexBetween 是否开启均匀分布
  * @param [object] itemStyle  tab-item的内联样式
+ * @param [string] customClass 最外层自定义class
  */
 export default {
   name: "easy-tabs",
@@ -78,6 +79,10 @@ export default {
     itemStyle:{
       type:Object,
       default:() => ({})
+    },
+    customClass:{
+      type:String,
+      default:null
     }
   },
   data(){
