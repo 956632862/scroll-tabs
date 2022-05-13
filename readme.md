@@ -20,6 +20,9 @@ itemOffsetTop|滚动相隔间距，到达会切换tab|Number|60|否
 stickyTop|固定定位的top高度，传入时需要携带单位（如 0rpx）|Object|{}|否
 scrollTab|开启滚动时切换到指定的tab|Boolean|true|否
 clickScroll|开启点击时滚动到相应位置|Boolean|true|否
+offsetTop|滚动偏离值，添加之后，每次滚动都会减去这个值，数值单位px|Number|0|否
+
+
 
 #### 事件
 
