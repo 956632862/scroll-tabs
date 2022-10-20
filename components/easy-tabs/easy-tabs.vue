@@ -1,90 +1,74 @@
 <template>
-<view class="easy-tabs-container" :class="customClass ? customClass : ''">
-  <view id="easy-tabs-scroll-container" >
-    <scroll-view scroll-x class="easy-tabs-scroll" :scrollLeft="scrollLeft" scroll-with-animation>
-      <view class="easy-tabs-box" :class="{'easy-tabs-box-flex-space-between': flexBetween}">
-        <!--列表-->
+  <view
+      :class="customClass ? customClass : ''"
+      class="easy-tabs-container"
+  >
+    <view id="easy-tabs-scroll-container" >
+      <scroll-view
+          :scrollLeft="scrollLeft"
+          :style="{ position: fixed ? 'fixed' : 'relative', zIndex: 9 }"
+          class="easy-tabs-scroll"
+          scroll-with-animation
+          scroll-x
+      >
         <view
-            class="easy-tabs-item"
-            :id="'easy-tab-item-'+index"
-            :style="[tabItemStyle(index)]"
-            v-for="(item,index) in list"
-            :key="index"
-            @tap="handleSelectItem(index)"
+            id='_easy-tabs-box'
+            :class="{'easy-tabs-box-flex-space-between': flexBetween}"
+            class="easy-tabs-box"
         >
-          {{item[label]}}
+          <!--列表-->
+          <view
+              v-for="(item,index) in list"
+              :id="'easy-tab-item-'+index"
+              :key="index"
+              :class="index === active ? 'is-active' : 'not-active'"
+              :style="[tabItemStyle(index)]"
+              class="easy-tabs-item"
+              @tap="handleSelectItem(index)"
+          >
+            {{item[label]}}
+          </view>
+          <!--滚动条-->
+          <view
+              :style="[tabBarStyle]"
+              class="easy-tab-bar"
+          />
         </view>
-        <!--滚动条-->
-        <view class="easy-tab-bar" :style="[tabBarStyle]"></view>
-      </view>
-    </scroll-view>
+      </scroll-view>
+      <view
+          v-show="fixed"
+          :style="{height}"
+          class='easy-placeholder'
+      />
+    </view>
   </view>
-</view>
 </template>
 
 <script>
 /**
  * @description 参数说明
- * @param [array] list  tab列表
- * @param [number] current 当前选中项 支持.sync
- * @param [string] label label字段名
- * @param [string] activeColor 选中颜色
- * @param [string] inactiveColor   默认颜色
- * @param [number] duration  过渡时间 (s)
- * @param [number] barHeight tabBar的高度
- * @param [string | number] barWidth  tabBar的宽 设置为auto的时候，会根据tab的宽度自动变化
- * @param [boolean] flexBetween 是否开启均匀分布
- * @param [object] itemStyle  tab-item的内联样式
- * @param [string] customClass 最外层自定义class
- */
+ * @property [array]   list  tab列表
+ * @property [number]  current 当前选中项 支持.sync (v1.1.1版本起废弃)
+ * @property [string]  label label字段名
+ * @property [string]  activeColor 选中颜色
+ * @property [string]  inactiveColor   默认颜色
+ * @property [number]  duration  过渡时间 (s)
+ * @property [number]  barHeight tabBar的高度
+ * @property [string | number] barWidth  tabBar的宽 设置为auto的时候，会根据tab的宽度自动变化
+ * @property [boolean] flexBetween 是否开启均匀分布
+ * @property [object]  itemStyle  tab-item的内联样式
+ * @property [string]  customClass 最外层自定义class
+ * @property [number]  value 新版本使用v-model来进行index同步，废弃旧的方式
+ * @property [boolean] fixed 是否开启固定定位
+ * @property [string]  height tabItem的高度
+ * @property [string]  padding tabItem的内边距
+ * @property [string]  barColor tabbar颜色，不定义此项则跟文本颜色一致
+ * @property [string]  barRadius  圆角度数
+ **/
+import props from "./props"
 export default {
   name: "easy-tabs",
-  props:{
-    list:{
-      type:Array,
-      default:() => []
-    },
-    current:{
-      type:Number,
-      default:0
-    },
-    label:{
-      type:String,
-      default:'label'
-    },
-    activeColor:{
-      type:String,
-      default:"#62C085",
-    },
-    inactiveColor:{
-      type:String,
-      default:"#666666",
-    },
-    duration:{
-      type: [String, Number],
-      default: 0.5
-    },
-    barHeight:{
-      type:Number,
-      default:6
-    },
-    barWidth:{
-      type:[String,Number],
-      default:50
-    },
-    flexBetween:{
-      type:Boolean,
-      default:false
-    },
-    itemStyle:{
-      type:Object,
-      default:() => ({})
-    },
-    customClass:{
-      type:String,
-      default:null
-    }
-  },
+  mixins:[ props ],
   data(){
     return {
       active:0,
@@ -96,9 +80,11 @@ export default {
     }
   },
   watch:{
-    current:{
+    value:{
       immediate: true,
-      handler:function (nVal) {
+      handler:function (nVal,oVla) {
+		  console.log(nVal,'nVal')
+		  console.log(oVla,'oVla')
         this.$nextTick(() => {
           this.active = nVal
           this.scrollTabBar()
@@ -111,15 +97,20 @@ export default {
       let style = {
         'transition-duration':this.duration + 's',
         height:this.barHeight + 'rpx',
-        background: this.activeColor,
+        background: this.barColor || this.activeColor,
         transform: `translate(${this.scrollBarLeft}px, -100%)`,
         width: this.privateBarWidth + 'rpx',
+        borderRadius:this.barRadius
       }
       return style
     },
     tabItemStyle(){
       return (index) => {
-        const style = {}
+        const style = {
+          height:this.height,
+          padding:this.padding
+        }
+
         style.color = index === this.active ?  this.activeColor :  this.inactiveColor
         Object.assign(style,this.itemStyle)
         return style
@@ -132,9 +123,12 @@ export default {
   methods:{
     // 初始化
     async init(){
+      this.active = this.value
       this.privateBarWidth = this.barWidth
-      this.parentInfo = await this.createSelectorQuery('#easy-tabs-scroll-container')
-      this.getTabInfo()
+      if (this.list.length){
+        this.parentInfo = await this.createSelectorQuery('#easy-tabs-scroll-container')
+        this.getTabInfo()
+      }
     },
     // 获取所有节点的信息
     getTabInfo(){
@@ -176,15 +170,16 @@ export default {
       this.active = index
       this.scrollTabBar()
       const tab = this.list[index]
-      this.$emit('update:current',index)
-      this.$emit('change',{index,tab})
+      this.$emit('input',index)
+      // this.$emit('update:current',index)
+      this.$emit('change',tab)
     },
     createSelectorQuery(selector,all){
       return new Promise(resolve => {
         uni.createSelectorQuery().
         in(this)[all ? 'selectAll' : 'select'](selector).boundingClientRect(rect => {
-          if (all && Array.isArray(rect) && rect.length) {resolve(rect)}
-          if (!all && rect) {resolve(rect)}
+          if (all && Array.isArray(rect) && rect.length) { resolve(rect) }
+          if (!all && rect) { resolve(rect) }
         }).exec()
       })
     },
@@ -192,29 +187,33 @@ export default {
 }
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .easy-tabs-container{
   .easy-tabs-scroll{
+    background: #ffffff;
     width: 100%;
     white-space: nowrap;
     position: relative;
   }
   .easy-tabs-box{
     position: relative;
+    .is-active{}
   }
   .easy-tabs-box-flex-space-between{
     display: flex;
     justify-content: space-between;
   }
   .easy-tabs-item{
-    display: inline-block;
-    text-align: center;
+    //display: inline-block;
+    //text-align: center;
     transition-property: background-color, color;
-    padding: 15rpx 30rpx 20rpx 30rpx;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   .easy-tab-bar{
     position: absolute;
-    bottom: 0;
+    bottom: -1px;
   }
 }
 

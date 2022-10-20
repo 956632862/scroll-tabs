@@ -1,12 +1,13 @@
 <template>
-  <view class="scroll-tabs-container" >
+  <view class="scroll-tabs-container">
+    <view class='status_bar'></view>
     <view :class="{'scroll-tabs-sticky':sticky}" :style="{top:stickyTop || localStickyTop}">
       <easyTabs
           v-if="tabs.length"
           id="tabScrollTop"
           ref="tabScrollTop"
+          v-model="active"
           :list='tabs'
-          :current="active"
           :label="reTabOptions.label"
           :activeColor="reTabOptions.activeColor"
           :inactiveColor="reTabOptions.inactiveColor"
@@ -15,6 +16,7 @@
           :barWidth="reTabOptions.barWidth"
           :flexBetween="reTabOptions.flexBetween"
           :itemStyle="reTabOptions.itemStyle"
+          :height="reTabOptions.height"
           :customClass="reTabOptions.customClass"
           @change='handleChangeTab'
       />
@@ -27,104 +29,123 @@
 
 <script>
 import easyTabs from "../easy-tabs/easy-tabs"
+
 /**
  * @description props参数说明
- * @param scrollTop 外部传入的滚动条高度
- * @param tabs tabs
- * @param current 当前选中的tab
- * @param stickyTop 固定定位的高度
- * @param sticky 是否设置tab为固定定位
- * @param itemOffsetTop 自定义滚动相隔间距，到达会切换tab
- * @param tabOptions tab的配置
- * @param scrollTab 滚动时是否切换到指定的tab
- * @param clickScroll 点击时是否滚动到相应位置
- * @param duration  滚动持续时长
- * @param offsetTop 点击滚动到某一模块时的偏离值，每次点击滚动都会减去这个偏离值,这个值的单位是px，
+ * @property [number] scrollTop 外部传入的滚动条高度
+ * @property [array] tabs tabs
+ * @property [number] current 设置默认的tabIndex
+ * @property [number]  stickyTop 固定定位的高度
+ * @property [boolean] sticky 是否设置tab为固定定位
+ * @property [number] itemOffsetTop 自定义滚动相隔间距，到达会切换tab
+ * @property [object]  tabOptions tab的配置
+ * @property [boolean] scrollTab 滚动时是否切换到指定的tab
+ * @property [boolean] clickScroll 点击时是否滚动到相应位置
+ * @property [number ] duration  滚动持续时长
+ * @property [number] offsetTop 点击滚动到某一模块时的偏离值，每次点击滚动都会减去这个偏离值,这个值的单位是px，
  */
 export default {
-  components:{easyTabs},
-  props:{
-    scrollTab:{
-      type:Boolean,
-      default:true
+  components: {easyTabs},
+  // #ifdef MP-WEIXIN
+  options: {
+    virtualHost: true
+  },
+  // #endif
+  props: {
+    value: {
+      type: Number | String,
+      default: null
     },
-    clickScroll:{
-      type:Boolean,
-      default:true
+    scrollTab: {
+      type: Boolean,
+      default: true
     },
-    scrollTop:{
-      type:Number,
-      default:0
+    clickScroll: {
+      type: Boolean,
+      default: true
     },
-    tabs:{
-      type:Array,
-      default:() => ([])
+    scrollTop: {
+      type: Number,
+      default: 0
     },
-    // 当前选中的tab
-    current:{
-      type:Number,
-      default:0
+    tabs: {
+      type: Array,
+      default: () => ([])
     },
-    stickyTop:{
-      type:String,
-      default:null
+    // 设置默认的tabIndex
+    current: {
+      type: Number,
+      default: 0
+    },
+    stickyTop: {
+      type: String,
+      default: null
     },
     // 是否将tab设为固定定位
-    sticky:{
-      type:Boolean,
-      default:true
+    sticky: {
+      type: Boolean,
+      default: true
     },
     // 自定义间距 ,当 top小于等于这个距离的时候会切换tab
-    itemOffsetTop:{
-      type:Number,
-      default:60
+    itemOffsetTop: {
+      type: Number,
+      default: 60
     },
-    tabOptions:{
-      type:Object,
-      default:()=>({})
+    tabOptions: {
+      type: Object,
+      default: () => ({})
     },
-    duration:{
-      type:Number,
-      default:300
+    duration: {
+      type: Number,
+      default: 300
     },
-    offsetTop:{
-      type:Number,
-      default:0
+    offsetTop: {
+      type: Number,
+      default: 0
     }
   },
-  data(){
+  data() {
     return {
-      tabTopHeight:0,
-      active:0,
-      click:false,
-      timer:null,
-      localStickyTop:'0rpx'
+      tabTopHeight: 0,
+      tabWindowTop: 0,
+      active: 0,
+      click: false,
+      timer: null,
+      localStickyTop: '0rpx',
     }
   },
-  computed:{
-    reTabOptions(){
+  computed: {
+    reTabOptions() {
       const defaultOptions = {
-        label:'label',
-        activeColor:'#62C085',
-        inactiveColor:'#666666',
-        duration:0.5,
-        barHeight:6,
-        barWidth:50,
-        flexBetween:false,
-        customClass:''
+        label: 'label',
+        activeColor: '#62C085',
+        inactiveColor: '#666666',
+        duration: 0.5,
+        barHeight: 6,
+        barWidth: 50,
+        flexBetween: false,
+        customClass: ''
       }
-      return Object.assign(defaultOptions,this.tabOptions)
+      return Object.assign(defaultOptions, this.tabOptions)
     }
   },
-  watch:{
-    scrollTop(){
-      if (!this.click){
+  watch: {
+    value: {
+      immediate: true,
+      handler: function (nVal, oVla) {
+        this.$nextTick(() => {
+          this.active = nVal
+        })
+      }
+    },
+    scrollTop() {
+      if (!this.click) {
         this.scrollToTab()
       }
     },
-    current:{
+    current: {
       immediate: true,
-      handler:function (nVal) {
+      handler: function (nVal) {
         this.active = nVal
         this.$nextTick(() => {
           this.scrollToElement()
@@ -134,92 +155,114 @@ export default {
   },
   mounted() {
     this.getScrollTabTopHeight()
-    // this.scrollToElement()
-    // const res = uni.getSystemInfoSync();
-    // this.$nextTick(() => {
-    //   // * 2是因为获取到的高度是根据px来算的
-    //   // console.log(res,'res')
-    //   // this.localStickyTop = `${res.statusBarHeight * 2}rpx`
-    // })
+
   },
-  methods:{
+  methods: {
     // 获取选项卡的高度
-    async getScrollTabTopHeight(){
+    async getScrollTabTopHeight() {
       // 获取tab的高度
-      const query  = await this.createSelectorQueryForThis('#tabScrollTop')
-      if (!query) return ;
+      const query = await this.createSelectorQueryForThis('#tabScrollTop')
+      if (!query) return;
       this.tabTopHeight = query.height
+
+      const _query = await this.createSelectorQueryForThis('.status_bar')
+      this.tabWindowTop = _query.top
     },
-    handleChangeTab({index,tab}){
-      this.active = index
+
+    handleChangeTab(tab) {
       this.scrollToElement()
-      this.$emit('onChange',tab,index)
+      this.$emit('onChange', tab, this.active)
+      this.$emit('input', this.active)
     },
 
     // 滚动时切换到指定的tab
-    async scrollToTab(){
+    async scrollToTab() {
       if (!this.scrollTab && !this.click) return false
       const length = this.tabs.length
       let allClass = ''
-      for (let i = 0; i < length; i++){
+      for (let i = 0; i < length; i++) {
         const {scroll_id} = this.tabs[i]
         allClass += i < length - 1 ? `.${scroll_id},` : `.${scroll_id}`
       }
-      const queryData = await this.createSelectorQuery(allClass,true)
+      const queryData = await this.createSelectorQuery(allClass, true)
       for (let i = 0; i < queryData.length; i++) {
-        if (queryData[i].top <= this.itemOffsetTop){
-          this.active  = i
+        if (queryData[i].top <= this.itemOffsetTop) {
+          this.active = i
         }
       }
     },
+
     // 点击滑动到指定元素
-    async scrollToElement(){
+    async scrollToElement() {
       if (!this.clickScroll) return false
       const tab = this.tabs[this.active]
-      if(!tab)return
+      if (!tab) return
       const {scroll_id} = tab
       if (!scroll_id) return false
-      this.click =  true
+      this.click = true
       clearTimeout(this.timer)
-      const queryData =  await this.createSelectorQuery(`.${scroll_id}`)
-      if(this.tabTopHeight === 0) await this.getScrollTabTopHeight()
+      const queryData = await this.createSelectorQuery(`.${scroll_id}`)
+      if (this.tabTopHeight === 0) await this.getScrollTabTopHeight()
 
-      if (!queryData){
+      if (!queryData) {
         this.click = true
         return false
       }
+
+      let scrollTop = this.scrollTop + queryData.top - this.offsetTop
+
+      // #ifndef H5
+      // 非H5端，顶部的状态栏是会占用位置的
+      scrollTop -= this.tabTopHeight
+      // #endif
+
+      // #ifdef H5
+      const stickyTop = this.stickyTop || this.localStickyTop
+      if (this.tabWindowTop === 0) {
+        scrollTop -= this.tabTopHeight
+      }
+      // #endif
+
       // 页面滚动函数
       uni.pageScrollTo({
-        scrollTop: this.scrollTop + queryData.top - this.tabTopHeight - this.offsetTop,
+        scrollTop,
         duration: this.duration,
-        success:()=>{
-          this.timer =  setTimeout(()=>{
+        success: () => {
+          this.timer = setTimeout(() => {
             this.click = false
-          },this.duration + 500)
+          }, this.duration + 500)
         }
       });
     },
-    createSelectorQueryForThis(selector,all){
+
+    createSelectorQueryForThis(selector, all) {
       return new Promise(resolve => {
         uni.createSelectorQuery().in(this)[all ? 'selectAll' : 'select'](selector).boundingClientRect(rect => {
           resolve(rect)
         }).exec()
       })
     },
-    createSelectorQuery(selector,all){
+
+    createSelectorQuery(selector, all) {
       return new Promise(resolve => {
         uni.createSelectorQuery()[all ? 'selectAll' : 'select'](selector).boundingClientRect(rect => {
           resolve(rect)
         }).exec()
       })
     }
+
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.scroll-tabs-container{
-  .scroll-tabs-sticky{
+.scroll-tabs-container {
+  .status_bar {
+    display: none;
+    // height: var(--status-bar-height);
+  }
+
+  .scroll-tabs-sticky {
     position: sticky;
     z-index: 9999;
     overflow: hidden;

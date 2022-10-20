@@ -1,9 +1,11 @@
 # Scroll-Tabs
 
 uniapp支持点击滚动到对应的tab的选项卡组件，也支持滚动到对应组件时切换相应的tab选项。
-下面其中的**scrollTop为必传项，下面的表格不知道为什么展示不全部，需要在父页面中调用onPageScroll获取到滚动位置之后传入**
+下面其中的**scrollTop为必传项，下面的表格不知道为什么展示不全，需要在父页面中调用onPageScroll获取到滚动位置之后传入**
 
 ## 组件参数说明
+
+**1.3.0版本起使用v-model代替current属性**
 
 ### ScrollTabs
 
@@ -12,7 +14,7 @@ uniapp支持点击滚动到对应的tab的选项卡组件，也支持滚动到�
 参数|说明|类型|默认值|必传
 :-:|:--:|:-:|:-:|---
 scrollTop|**由于组件内部无法获取滚动条位置，需要在父级组件调用`onPageScroll`获取**|Number|0|是
-current|选中的tab下标|Number|0|否
+current|选中的tab下标**(1.3.0版本起不再使用)**|Number|0|否
 tabs|选项卡列表，**详情见下面说明**|Array|[ ]|是
 tabOptions|选项卡组件的配置 **详情见下面说明**|String|0rpx|否
 sticky|是否设置选项卡为固定定位|Boolean|true|否
@@ -67,7 +69,7 @@ export default {
 </script>
 ```
 
-
+> 并不需要一直嵌套在插槽之中使用，只要页面元素与配置中的对应就可以进行滚动操作
 
 ### TabOptions配置说明
 
